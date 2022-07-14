@@ -61,7 +61,13 @@
         </q-input>
       </div>
       <div class="row justify-center q-mt-lg">
-        <q-btn color="primary" unelevated rounded label="Post Image" />
+        <q-btn
+          color="primary"
+          unelevated
+          rounded
+          label="Post Image"
+          @click="postImage()"
+        />
       </div>
     </div>
   </q-page>
@@ -182,20 +188,22 @@ export default {
       }
     },
     getCityCountry(position) {
-      let apiURL = `https://geocode.xyz/${position.coords.latitude},${position.coords.longitude}?json=1`;
+      let apiURL = `http://api.positionstack.com/v1/reverse?access_key=ef69dcc28f6d45e965edc34ffc3aa4b4&query=${position.coords.latitude},${position.coords.longitude}&limit=1`;
+      // let apiURL = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`;
       this.$axios
         .get(apiURL)
         .then((response) => {
-          this.locationSuccess(response);
+          this.locationSuccess(response.data);
         })
         .catch((error) => {
+          console.log(error);
           this.locationError();
         });
     },
     locationSuccess(result) {
-      this.post.location = result.data.city;
-      if (result.data.country) {
-        this.post.location += `, ${result.data.country}`;
+      this.post.location = result.data[0].region;
+      if (result.data[0].country) {
+        this.post.location += `, ${result.data[0].country}`;
       }
       this.pendingLocation = false;
     },
@@ -205,6 +213,27 @@ export default {
         title: "Error",
         message: "Could not find your location",
       });
+    },
+    postImage() {
+      let formData = new FormData();
+      for (let [key, value] of Object.entries(this.post)) {
+        if (key === "photo") {
+          formData.append(key, value, this.post.id + ".png");
+        } else {
+          formData.append(key, value);
+        }
+      }
+      this.$axios
+        .post(`${process.env.API}/createpost`, formData)
+        .then((response) => {
+          console.log(response);
+          this.$q.dialog({
+            title: "Success",
+            message: "Your post has been successfully created",
+          });
+          this.$router.push("/");
+        });
+      // console.log(...formData);
     },
   },
   mounted() {

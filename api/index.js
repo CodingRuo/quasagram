@@ -14,6 +14,7 @@ app.get("/posts", (req, res) => {
   res.set("Access-Control-Allow-Origin", "*");
   let posts = [];
   db.collection("posts")
+    .orderBy("date", "desc")
     .get()
     .then((snapshot) => {
       snapshot.forEach((doc) => {
@@ -22,6 +23,11 @@ app.get("/posts", (req, res) => {
       });
       res.send(posts);
     });
+});
+
+app.post("/createpost", (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.send(req.headers);
 });
 
 app.listen(port, () => {
